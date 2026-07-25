@@ -1,0 +1,109 @@
+name: Python Runtime Compatibility
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "src/**"
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/runtime-compatibility.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "src/**"
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/runtime-compatibility.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-compatibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out repository without persisted credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+
+      - name: Install package and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip check
+
+      - name: Report resolved runtime versions
+        shell: bash
+        run: |
+          python - <<'PY'
+          import sys
+          import matplotlib
+          import nbformat
+          import openpyxl
+          import pandas
+
+          print("Python:", sys.version)
+          print("pandas:", pandas.__version__)
+          print("matplotlib:", matplotlib.__version__)
+          print("openpyxl:", openpyxl.__version__)
+          print("nbformat:", nbformat.__version__)
+          PY
+
+      - name: Run package compatibility tests
+        env:
+          PYTHONWARNINGS: "error::FutureWarning"
+        run: python -m unittest discover -s tests -v
+
+      - name: Validate repository security and integrity
+        run: python -I scripts/validate_repository.py
+
+      - name: Execute BI transformation smoke test
+        run: |
+          set -euo pipefail
+          python scripts/build_bi_ready_layer.py
+          python - <<'PY'
+          from pathlib import Path
+
+          output = Path("data/bi_ready_csv")
+          files = sorted(output.glob("*.csv"))
+          if len(files) != 15:
+              raise SystemExit(f"Expected 15 BI-ready CSV files, found {len(files)}")
+          empty = [path.name for path in files if path.stat().st_size == 0]
+          if empty:
+              raise SystemExit(f"Generated empty BI-ready files: {empty}")
+          print("BI-ready compatibility smoke test passed:", len(files), "CSV files")
+          PY
