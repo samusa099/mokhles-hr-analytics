@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.kaggle.com/datasets/samusahr/mokhles-group-hr-analytics-portfolio-bd-fy2025"><img alt="Kaggle Dataset" src="https://img.shields.io/badge/Kaggle-Live%20Dataset-20BEFF?logo=kaggle&logoColor=white"></a>
-  <img alt="Release" src="https://img.shields.io/badge/Release-v2.3.0-7C3AED">
+  <img alt="Release" src="https://img.shields.io/badge/Release-v2.4.0-7C3AED">
   <img alt="Context" src="https://img.shields.io/badge/Context-Bangladesh-1E8E5A">
   <img alt="Data" src="https://img.shields.io/badge/Data-100%25%20Synthetic-625BEB">
   <img alt="License" src="https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey">
@@ -156,6 +156,7 @@ mokhles-hr-analytics/
 │       └── publish/
 ├── scripts/                    # Build, profile and validation scripts
 ├── src/                        # Reusable Python package
+├── tests/                      # Runtime compatibility tests
 ├── wiki/                       # Repository-maintained Wiki source
 ├── CITATION.cff
 ├── LICENSE
@@ -195,6 +196,7 @@ python -m pip install -e .
 ### 2. Validate and build
 
 ```bash
+python -m unittest discover -s tests -v
 python scripts/validate_repository.py
 python scripts/build_bi_ready_layer.py
 python scripts/build_analysis_ready.py
@@ -211,6 +213,7 @@ jupyter lab notebooks/Mokhles_HR_Analytics_EDA.ipynb
 
 ## 📚 Documentation map
 
+- 🚀 **[v2.4.0 Release Notes — Runtime Compatibility & Deployment Readiness](RELEASE_NOTES_v2.4.0.md)**
 - 📘 **[Detailed Dataset Usage Guide — Why, How, Where and Calculations](docs/DATASET_USAGE_GUIDE.md)**
 - 🟨 [Power BI implementation](docs/platforms/power_bi_assets/)
 - 🟩 [Excel analytics](docs/platforms/excel_analytics/)
