@@ -1,3 +1,4 @@
+# Runtime compatibility is validated on every dependency or packaging change.
 pandas>=3.0.5
 numpy>=2.4.6
 matplotlib>=3.11.1
