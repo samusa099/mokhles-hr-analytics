@@ -1,0 +1,40 @@
+name: Participant Submission Target Policy
+
+on:
+  pull_request:
+    branches: ["main", "submissions"]
+    paths:
+      - "participant_submissions/**"
+      - ".github/workflows/submission-target-policy.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: submission-target-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  enforce-target:
+    name: Require submissions branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Reject participant submissions targeting main
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$BASE_REF" == "main" ]]; then
+            echo "Participant submissions must target the 'submissions' branch, not 'main'."
+            echo "Close or retarget this pull request to 'submissions'."
+            exit 1
+          fi
+          if [[ "$BASE_REF" != "submissions" ]]; then
+            echo "Unexpected target branch: $BASE_REF"
+            echo "Participant submissions must target 'submissions'."
+            exit 1
+          fi
+          echo "Submission target policy passed."
