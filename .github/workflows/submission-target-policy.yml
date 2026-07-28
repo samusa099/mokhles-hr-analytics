@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["main", "submissions"]
     paths:
-      - "participant_submissions/**"
+      - "participant_submissions/*/**"
 
 permissions:
   contents: read
