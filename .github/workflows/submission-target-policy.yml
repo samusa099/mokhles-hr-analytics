@@ -3,8 +3,6 @@ name: Participant Submission Target Policy
 on:
   pull_request:
     branches: ["main", "submissions"]
-    paths:
-      - "participant_submissions/*/**"
 
 permissions:
   contents: read
@@ -20,20 +18,31 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Reject participant submissions targeting main
+      - name: Inspect changed paths
         shell: bash
         env:
           BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if [[ "$BASE_REF" == "main" ]]; then
-            echo "Participant submissions must target the 'submissions' branch, not 'main'."
-            echo "Close or retarget this pull request to 'submissions'."
+
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin "$BASE_SHA" "$HEAD_SHA"
+
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          printf '%s\n' "$changed_files"
+
+          if [[ "$BASE_REF" == "main" ]] && grep -Eq '^participant_submissions/[^/]+/' <<<"$changed_files"; then
+            echo "Participant solution folders must target the 'submissions' branch, not 'main'."
+            echo "Retarget this pull request to 'submissions'."
             exit 1
           fi
-          if [[ "$BASE_REF" != "submissions" ]]; then
-            echo "Unexpected target branch: $BASE_REF"
-            echo "Participant submissions must target 'submissions'."
-            exit 1
+
+          if [[ "$BASE_REF" == "submissions" ]]; then
+            echo "Submission target policy passed."
+            exit 0
           fi
-          echo "Submission target policy passed."
+
+          echo "No participant solution folder is being added to main. Policy passed."
