@@ -29,7 +29,8 @@
   <a href="#-overview">Overview</a> ·
   <a href="#-project-snapshot">Snapshot</a> ·
   <a href="#-dataset-usage">Usage</a> ·
-  <a href="docs/DATASET_USAGE_GUIDE.md">Detailed Guide</a> ·
+  <a href="#-advanced-case-challenge">Case Challenge</a> ·
+  <a href="participant_submissions/README.md">Submissions</a> ·
   <a href="#-repository-structure">Structure</a> ·
   <a href="#-quick-start">Quick Start</a>
 </p>
@@ -49,6 +50,7 @@
 | 🧱 **BI engineering** | Dimensions, fact tables, relationships, Power Query, DAX, theme and dashboard blueprint |
 | ✅ **Data quality** | Table profiling, field profiling, duplicate checks and validation rules |
 | 🐍 **Reproducibility** | Python scripts, structured metadata and Jupyter analysis |
+| 🧠 **Advanced case challenge** | A controlled Dhaka–Rajshahi expansion diagnosis with strict evidence rules |
 | 🛡️ **Ethical design** | No real employee, payroll, applicant or confidential organisational information |
 
 ---
@@ -96,6 +98,31 @@ Use this dataset to **calculate HR KPIs**, practise **data cleaning**, build **E
 
 ---
 
+## 🧩 Advanced case challenge
+
+### Mokhles Group Rajshahi Expansion Crisis
+
+Mokhles Group copied its mature Dhaka HR operating model into a new Rajshahi office. By Q4 FY2025, hiring, turnover, training, performance, leave and safety indicators were sending conflicting signals. Participants must determine whether Rajshahi is a failing location or whether the organisation is using the wrong workforce operating model for a new location.
+
+| Case requirement | Standard |
+|---|---|
+| Difficulty | Approximately 80% |
+| Data boundary | Existing project data only |
+| External data | Prohibited |
+| Final decision | Continue, Pause or Redesign |
+| Priority actions | Exactly three |
+| Evidence rule | Confirmed finding, supported inference, unproven hypothesis or unsupported claim |
+
+<p align="center">
+  <a href="docs/case_studies/RAJSHAHI_EXPANSION_CRISIS.md"><strong>🧠 Open the full hardened case →</strong></a>
+  &nbsp;·&nbsp;
+  <a href="participant_submissions/README.md"><strong>📥 Participant submission guide →</strong></a>
+</p>
+
+> Participant solutions must target the dedicated `submissions` branch. Pull requests changing `participant_submissions/**` must not target `main`.
+
+---
+
 ## 🧭 Choose your workspace
 
 | Workspace | Best for | Start here |
@@ -105,6 +132,8 @@ Use this dataset to **calculate HR KPIs**, practise **data cleaning**, build **E
 | 📊 **Quick employee analysis** | One-row-per-employee exploration | `data/analysis_ready/employee_360_fy2025.csv` |
 | 🏢 **Department comparison** | Executive and department-level analysis | `data/analysis_ready/department_360_summary_fy2025.csv` |
 | 🧱 **Relational BI model** | Power BI, Tableau and Qlik modeling | `data/bi_ready_csv/` |
+| 🧠 **Advanced case study** | Dhaka–Rajshahi expansion diagnosis | `docs/case_studies/` |
+| 📥 **Participant solutions** | Isolated challenge submissions | `participant_submissions/` on branch `submissions` |
 
 ---
 
@@ -128,6 +157,8 @@ flowchart LR
 | **Analysis-ready layer** | Consolidated Employee 360 and Department 360 | `data/analysis_ready/` |
 | **Data quality** | Profiles and validation rules | `data/data_quality/` |
 | **BI assets** | Relationships, KPIs, DAX, theme and blueprints | `bi_assets/`, `docs/platforms/` |
+| **Case studies** | Advanced decision cases and evaluation standards | `docs/case_studies/` |
+| **Participant submissions** | Isolated solution workspace | `participant_submissions/` |
 | **Kaggle package** | Structured download and learning workspace | `packages/kaggle/` |
 
 ---
@@ -136,7 +167,7 @@ flowchart LR
 
 ```text
 mokhles-hr-analytics/
-├── .github/                    # Workflows and contribution templates
+├── .github/                    # Workflows, policies and contribution templates
 ├── assets/                     # Repository visuals
 ├── bi_assets/                  # Power BI theme and semantic-model assets
 ├── data/
@@ -147,6 +178,8 @@ mokhles-hr-analytics/
 │   └── data_quality/           # Profiles and validation rules
 ├── docs/
 │   ├── DATASET_USAGE_GUIDE.md  # Why, how, where and KPI calculations
+│   ├── case_studies/            # Hardened business cases
+│   ├── governance/              # Main-branch and submission policy
 │   ├── bi/
 │   └── platforms/
 ├── notebooks/                  # Jupyter analysis
@@ -154,6 +187,7 @@ mokhles-hr-analytics/
 │   └── kaggle/
 │       ├── structured_workspace/
 │       └── publish/
+├── participant_submissions/    # Participant solutions; target submissions branch
 ├── scripts/                    # Build, profile and validation scripts
 ├── src/                        # Reusable Python package
 ├── tests/                      # Runtime compatibility tests
@@ -213,6 +247,10 @@ jupyter lab notebooks/Mokhles_HR_Analytics_EDA.ipynb
 
 ## 📚 Documentation map
 
+- 🧠 **[Rajshahi Expansion Crisis — Advanced Case Study](docs/case_studies/RAJSHAHI_EXPANSION_CRISIS.md)**
+- 📥 **[Participant Submission Guide](participant_submissions/README.md)**
+- 🧾 **[Participant Submission Template](participant_submissions/SUBMISSION_TEMPLATE.md)**
+- 🛡️ **[Main Branch Protection and Submission Governance](docs/governance/MAIN_BRANCH_PROTECTION.md)**
 - 🚀 **[v2.4.0 Release Notes — Runtime Compatibility & Deployment Readiness](RELEASE_NOTES_v2.4.0.md)**
 - 📘 **[Detailed Dataset Usage Guide — Why, How, Where and Calculations](docs/DATASET_USAGE_GUIDE.md)**
 - 🟨 [Power BI implementation](docs/platforms/power_bi_assets/)
