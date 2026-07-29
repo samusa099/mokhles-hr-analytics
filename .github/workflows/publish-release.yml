@@ -1,0 +1,95 @@
+name: Publish GitHub Release
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "release/RELEASE_VERSION"
+      - "release/V*_RELEASE_MANIFEST.md"
+      - "RELEASE_NOTES_v*.md"
+      - ".github/workflows/publish-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish validated release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out release metadata without persisted credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Validate release metadata
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="$(tr -d '[:space:]' < release/RELEASE_VERSION)"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid semantic version: $VERSION"
+            exit 1
+          fi
+
+          NOTES="RELEASE_NOTES_${VERSION}.md"
+          MANIFEST="release/${VERSION^^}_RELEASE_MANIFEST.md"
+
+          [[ -s "$NOTES" ]] || { echo "Missing release notes: $NOTES"; exit 1; }
+          [[ -s "$MANIFEST" ]] || { echo "Missing release manifest: $MANIFEST"; exit 1; }
+
+          PACKAGE_VERSION="$(python - <<'PY'
+          import pathlib
+          import tomllib
+
+          with pathlib.Path('pyproject.toml').open('rb') as handle:
+              print(tomllib.load(handle)['project']['version'])
+          PY
+          )"
+
+          if [[ "v${PACKAGE_VERSION}" != "$VERSION" ]]; then
+            echo "pyproject.toml version v${PACKAGE_VERSION} does not match ${VERSION}"
+            exit 1
+          fi
+
+          TITLE="$(sed -n '1s/^# //p' "$NOTES")"
+          [[ -n "$TITLE" ]] || TITLE="$VERSION"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "notes=$NOTES" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+          NOTES: ${{ steps.release.outputs.notes }}
+          TITLE: ${{ steps.release.outputs.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists; nothing to publish."
+            exit 0
+          fi
+
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TITLE" \
+            --notes-file "$NOTES" \
+            --latest
