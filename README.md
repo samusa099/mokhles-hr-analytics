@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.kaggle.com/datasets/samusahr/mokhles-group-hr-analytics-portfolio-bd-fy2025"><img alt="Kaggle Dataset" src="https://img.shields.io/badge/Kaggle-Live%20Dataset-20BEFF?logo=kaggle&logoColor=white"></a>
-  <img alt="Release" src="https://img.shields.io/badge/Release-v2.4.0-7C3AED">
+  <img alt="Release" src="https://img.shields.io/badge/Release-v2.5.0-7C3AED">
   <img alt="Context" src="https://img.shields.io/badge/Context-Bangladesh-1E8E5A">
   <img alt="Data" src="https://img.shields.io/badge/Data-100%25%20Synthetic-625BEB">
   <img alt="License" src="https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey">
@@ -178,8 +178,8 @@ mokhles-hr-analytics/
 │   └── data_quality/           # Profiles and validation rules
 ├── docs/
 │   ├── DATASET_USAGE_GUIDE.md  # Why, how, where and KPI calculations
-│   ├── case_studies/            # Hardened business cases
-│   ├── governance/              # Main-branch and submission policy
+│   ├── case_studies/           # Hardened business cases
+│   ├── governance/             # Main-branch and submission policy
 │   ├── bi/
 │   └── platforms/
 ├── notebooks/                  # Jupyter analysis
@@ -188,6 +188,7 @@ mokhles-hr-analytics/
 │       ├── structured_workspace/
 │       └── publish/
 ├── participant_submissions/    # Participant solutions; target submissions branch
+├── release/                    # Version pointer and release manifests
 ├── scripts/                    # Build, profile and validation scripts
 ├── src/                        # Reusable Python package
 ├── tests/                      # Runtime compatibility tests
@@ -247,6 +248,7 @@ jupyter lab notebooks/Mokhles_HR_Analytics_EDA.ipynb
 
 ## 📚 Documentation map
 
+- 🚀 **[v2.5.0 Release Notes — Governance, Security & Advanced Case Study](RELEASE_NOTES_v2.5.0.md)**
 - 🧠 **[Rajshahi Expansion Crisis — Advanced Case Study](docs/case_studies/RAJSHAHI_EXPANSION_CRISIS.md)**
 - 📥 **[Participant Submission Guide](participant_submissions/README.md)**
 - 🧾 **[Participant Submission Template](participant_submissions/SUBMISSION_TEMPLATE.md)**
