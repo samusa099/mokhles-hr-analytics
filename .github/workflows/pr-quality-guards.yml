@@ -20,11 +20,77 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Detect unintentionally duplicated files
-        uses: chris-rutkowski/duplicate-guard@01e2af7b15e45e2ef66d65786a0b73855232748f # v1.0.2
+          persist-credentials: false
+
+      - name: Reject newly added exact duplicate files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          base = os.environ["BASE_SHA"]
+          head = os.environ["HEAD_SHA"]
+
+          def git(*args: str) -> str:
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          added = {
+              Path(path)
+              for path in git("diff", "--name-only", "--diff-filter=A", f"{base}...{head}").splitlines()
+              if path
+          }
+          if not added:
+              print("PASS: no newly added files require duplicate inspection.")
+              raise SystemExit(0)
+
+          tracked = {
+              Path(path)
+              for path in git("ls-files").splitlines()
+              if path
+          }
+
+          def digest(path: Path) -> str:
+              hasher = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      hasher.update(chunk)
+              return hasher.hexdigest()
+
+          existing_by_hash: dict[str, list[Path]] = {}
+          for path in sorted(tracked - added):
+              if path.is_file():
+                  existing_by_hash.setdefault(digest(path), []).append(path)
+
+          violations: list[tuple[Path, list[Path]]] = []
+          seen_added: dict[str, list[Path]] = {}
+          for path in sorted(added):
+              if not path.is_file():
+                  continue
+              file_hash = digest(path)
+              matches = existing_by_hash.get(file_hash, []) + seen_added.get(file_hash, [])
+              if matches:
+                  violations.append((path, matches))
+              seen_added.setdefault(file_hash, []).append(path)
+
+          if violations:
+              for path, matches in violations:
+                  print(f"::error file={path}::Exact duplicate of: {', '.join(map(str, matches))}")
+              print(f"FAILED: {len(violations)} newly added exact duplicate file(s).")
+              raise SystemExit(1)
+
+          print(f"PASS: inspected {len(added)} newly added file(s); no exact duplicates found.")
+          PY
 
   commit-message-validator:
     name: Commit Message Validator
@@ -33,8 +99,55 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Validate commit messages
-        uses: zjuDBxAI/commit-message-validator@3103b34d5ea3c5b754fd885ce47366db0c8ce6b9 # v1.0.0
+          persist-credentials: false
+
+      - name: Validate pull-request commit subjects
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import os
+          import re
+          import subprocess
+
+          base = os.environ["BASE_SHA"]
+          head = os.environ["HEAD_SHA"]
+          subjects = subprocess.check_output(
+              ["git", "log", "--format=%s", f"{base}..{head}"],
+              text=True,
+          ).splitlines()
+
+          conventional = re.compile(
+              r"^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)"
+              r"(?:\([a-z0-9._/-]+\))?!?: .{1,120}$"
+          )
+          dependabot = re.compile(r"^Bump .+ from \S+ to \S+$")
+          merge = re.compile(r"^Merge (?:branch|pull request)\b")
+
+          invalid = [
+              subject
+              for subject in subjects
+              if not (
+                  conventional.fullmatch(subject)
+                  or dependabot.fullmatch(subject)
+                  or merge.match(subject)
+              )
+          ]
+
+          if invalid:
+              for subject in invalid:
+                  print(f"::error::Invalid commit subject: {subject}")
+              print(
+                  "Expected Conventional Commits, for example: "
+                  "fix(ci): stabilize pull-request guards"
+              )
+              raise SystemExit(1)
+
+          print(f"PASS: validated {len(subjects)} pull-request commit subject(s).")
+          PY
