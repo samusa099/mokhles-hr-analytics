@@ -25,7 +25,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Reject newly added exact duplicate files
+      - name: Employee test — duplicate-guard action
+        id: duplicate_action
+        continue-on-error: true
+        uses: chris-rutkowski/duplicate-guard@01e2af7b15e45e2ef66d65786a0b73855232748f # v1.0.2
+
+      - name: Report duplicate-guard employee result
+        if: always()
+        env:
+          EMPLOYEE_OUTCOME: ${{ steps.duplicate_action.outcome }}
+        run: |
+          if [ "$EMPLOYEE_OUTCOME" = "success" ]; then
+            echo "Third-party duplicate-guard employee test passed."
+          else
+            echo "::warning::Third-party duplicate-guard employee test returned: $EMPLOYEE_OUTCOME. Python boss will make the authoritative decision."
+          fi
+
+      - name: Python boss — authoritative duplicate validation
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -36,7 +52,6 @@ jobs:
           import hashlib
           import os
           import subprocess
-          import sys
           from pathlib import Path
 
           base = os.environ["BASE_SHA"]
@@ -47,7 +62,12 @@ jobs:
 
           added = {
               Path(path)
-              for path in git("diff", "--name-only", "--diff-filter=A", f"{base}...{head}").splitlines()
+              for path in git(
+                  "diff",
+                  "--name-only",
+                  "--diff-filter=A",
+                  f"{base}...{head}",
+              ).splitlines()
               if path
           }
           if not added:
@@ -85,11 +105,19 @@ jobs:
 
           if violations:
               for path, matches in violations:
-                  print(f"::error file={path}::Exact duplicate of: {', '.join(map(str, matches))}")
-              print(f"FAILED: {len(violations)} newly added exact duplicate file(s).")
+                  print(
+                      f"::error file={path}::Exact duplicate of: "
+                      f"{', '.join(map(str, matches))}"
+                  )
+              print(
+                  f"FAILED: {len(violations)} newly added exact duplicate file(s)."
+              )
               raise SystemExit(1)
 
-          print(f"PASS: inspected {len(added)} newly added file(s); no exact duplicates found.")
+          print(
+              f"PASS: inspected {len(added)} newly added file(s); "
+              "no exact duplicates found."
+          )
           PY
 
   commit-message-validator:
@@ -104,7 +132,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Validate pull-request commit subjects
+      - name: Employee test — commit-message-validator action
+        id: commit_action
+        continue-on-error: true
+        uses: zjuDBxAI/commit-message-validator@3103b34d5ea3c5b754fd885ce47366db0c8ce6b9 # v1.0.0
+
+      - name: Report commit-validator employee result
+        if: always()
+        env:
+          EMPLOYEE_OUTCOME: ${{ steps.commit_action.outcome }}
+        run: |
+          if [ "$EMPLOYEE_OUTCOME" = "success" ]; then
+            echo "Third-party commit-message-validator employee test passed."
+          else
+            echo "::warning::Third-party commit-message-validator employee test returned: $EMPLOYEE_OUTCOME. Python boss will make the authoritative decision."
+          fi
+
+      - name: Python boss — authoritative commit validation
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -145,9 +189,11 @@ jobs:
                   print(f"::error::Invalid commit subject: {subject}")
               print(
                   "Expected Conventional Commits, for example: "
-                  "fix(ci): stabilize pull-request guards"
+                  "fix(ci): restore hybrid PR quality action testing"
               )
               raise SystemExit(1)
 
-          print(f"PASS: validated {len(subjects)} pull-request commit subject(s).")
+          print(
+              f"PASS: validated {len(subjects)} pull-request commit subject(s)."
+          )
           PY
