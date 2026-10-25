@@ -135,7 +135,7 @@ jobs:
       - name: Employee test — commit-message-validator action
         id: commit_action
         continue-on-error: true
-        uses: zjuDBxAI/commit-message-validator@3103b34d5ea3c5b754fd885ce47366db0c8ce6b9 # v1.0.0
+        uses: zjuDBxAI/commit-message-validator@cf7ce1cb07f231e54521869a928efb292714925b # v1.0.1
 
       - name: Report commit-validator employee result
         if: always()
